@@ -1,4 +1,6 @@
-import { IsEmail, IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsEmail, IsString, IsOptional, IsBoolean, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { NoteDto } from '../../common/dto/note.dto';
 
 export class CreateVolunteerDto {
   @IsString()
@@ -20,6 +22,8 @@ export class CreateVolunteerDto {
   active?: boolean;
 
   @IsOptional()
-  @IsString()
-  notes?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => NoteDto)
+  notes?: NoteDto[];
 }

@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Volunteer } from '../../volunteers/entities/volunteer.entity';
 import { Cat } from './cat.entity';
+import { NoteDto } from '../../common/dto/note.dto';
 
 @Entity('colonies')
 export class Colony {
@@ -38,8 +39,8 @@ export class Colony {
   @OneToMany(() => Cat, (cat) => cat.colony)
   cats: Cat[];
 
-  @Column({ type: 'text', nullable: true })
-  notes: string;
+  @Column({ type: 'jsonb', default: [] })
+  notes: NoteDto[];
 
   @CreateDateColumn()
   createdAt: Date;

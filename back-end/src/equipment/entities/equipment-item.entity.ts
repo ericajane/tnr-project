@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { NoteDto } from '../../common/dto/note.dto';
 
 export type EquipmentCondition = 'good' | 'fair' | 'poor';
 
@@ -28,8 +29,8 @@ export class EquipmentItem {
   @Column({ nullable: true })
   location: string;
 
-  @Column({ type: 'text', nullable: true })
-  notes: string;
+  @Column({ type: 'jsonb', default: [] })
+  notes: NoteDto[];
 
   @CreateDateColumn()
   createdAt: Date;

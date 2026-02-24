@@ -1,6 +1,7 @@
-import { IsString, IsOptional, IsIn, IsNumber, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsIn, IsNumber, IsDateString, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EquipmentCondition } from '../entities/equipment-item.entity';
+import { NoteDto } from '../../common/dto/note.dto';
 
 export class CreateEquipmentItemDto {
   @IsString()
@@ -28,6 +29,8 @@ export class CreateEquipmentItemDto {
   lastMaintenanceDate?: string;
 
   @IsOptional()
-  @IsString()
-  notes?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => NoteDto)
+  notes?: NoteDto[];
 }

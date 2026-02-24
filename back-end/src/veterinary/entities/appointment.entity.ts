@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Cat } from '../../colonies/entities/cat.entity';
+import { NoteDto } from '../../common/dto/note.dto';
 
 export type AppointmentType = 'neuter' | 'checkup' | 'followup' | 'other';
 export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled';
@@ -39,8 +40,8 @@ export class Appointment {
   @Column({ type: 'varchar', default: 'scheduled' })
   status: AppointmentStatus;
 
-  @Column({ type: 'text', nullable: true })
-  notes: string;
+  @Column({ type: 'jsonb', default: [] })
+  notes: NoteDto[];
 
   @CreateDateColumn()
   createdAt: Date;

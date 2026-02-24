@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsNumber, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsUUID, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { NoteDto } from '../../common/dto/note.dto';
 
 export class CreateColonyDto {
   @IsString()
@@ -24,6 +25,8 @@ export class CreateColonyDto {
   caretakerId?: string;
 
   @IsOptional()
-  @IsString()
-  notes?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => NoteDto)
+  notes?: NoteDto[];
 }

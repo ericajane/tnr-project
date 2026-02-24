@@ -1,5 +1,7 @@
-import { IsString, IsOptional, IsIn, IsDateString, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsIn, IsDateString, IsUUID, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { AppointmentType, AppointmentStatus } from '../entities/appointment.entity';
+import { NoteDto } from '../../common/dto/note.dto';
 
 export class CreateAppointmentDto {
   @IsOptional()
@@ -26,6 +28,8 @@ export class CreateAppointmentDto {
   status?: AppointmentStatus;
 
   @IsOptional()
-  @IsString()
-  notes?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => NoteDto)
+  notes?: NoteDto[];
 }

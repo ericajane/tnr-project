@@ -1,5 +1,7 @@
-import { IsString, IsOptional, IsIn, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsIn, IsDateString, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { CatStatus, CatSex } from '../entities/cat.entity';
+import { NoteDto } from '../../common/dto/note.dto';
 
 export class CreateCatDto {
   @IsOptional()
@@ -27,6 +29,8 @@ export class CreateCatDto {
   color?: string;
 
   @IsOptional()
-  @IsString()
-  notes?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => NoteDto)
+  notes?: NoteDto[];
 }

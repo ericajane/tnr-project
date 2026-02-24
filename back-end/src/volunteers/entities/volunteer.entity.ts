@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { NoteDto } from '../../common/dto/note.dto';
 
 @Entity('volunteers')
 export class Volunteer {
@@ -26,8 +27,8 @@ export class Volunteer {
   @Column({ default: true })
   active: boolean;
 
-  @Column({ type: 'text', nullable: true })
-  notes: string;
+  @Column({ type: 'jsonb', default: [] })
+  notes: NoteDto[];
 
   @CreateDateColumn()
   createdAt: Date;

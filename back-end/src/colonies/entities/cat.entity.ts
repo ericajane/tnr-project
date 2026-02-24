@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Colony } from './colony.entity';
+import { NoteDto } from '../../common/dto/note.dto';
 
 export type CatStatus = 'trapped' | 'neutered' | 'returned' | 'deceased';
 export type CatSex = 'male' | 'female' | 'unknown';
@@ -42,8 +43,8 @@ export class Cat {
   @Column({ nullable: true })
   color: string;
 
-  @Column({ type: 'text', nullable: true })
-  notes: string;
+  @Column({ type: 'jsonb', default: [] })
+  notes: NoteDto[];
 
   @CreateDateColumn()
   createdAt: Date;
