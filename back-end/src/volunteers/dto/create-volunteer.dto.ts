@@ -4,7 +4,10 @@ import { NoteDto } from '../../common/dto/note.dto';
 
 export class CreateVolunteerDto {
   @IsString()
-  name: string;
+  firstName: string;
+
+  @IsString()
+  lastName: string;
 
   @IsEmail()
   email: string;
@@ -12,6 +15,10 @@ export class CreateVolunteerDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
 
   @IsOptional()
   @IsString()

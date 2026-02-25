@@ -13,7 +13,7 @@ export class VolunteersService {
   ) {}
 
   findAll(): Promise<Volunteer[]> {
-    return this.repo.find({ order: { name: 'ASC' } });
+    return this.repo.find({ order: { lastName: 'ASC', firstName: 'ASC' } });
   }
 
   async findOne(id: string): Promise<Volunteer> {

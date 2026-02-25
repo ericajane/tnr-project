@@ -29,6 +29,20 @@ export interface Cat {
   updatedAt: string;
 }
 
+export interface Volunteer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  role?: string;
+  active: boolean;
+  notes: Note[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Colony {
   id: string;
   name: string;
