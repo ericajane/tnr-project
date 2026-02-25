@@ -22,6 +22,7 @@ export interface Colony {
   lat?: number;
   lng?: number;
   caretakerId?: string;
+  caretakerName?: string;
   notes: Note[];
   createdAt: string;
   updatedAt: string;

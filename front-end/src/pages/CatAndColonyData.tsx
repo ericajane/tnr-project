@@ -54,7 +54,7 @@ export default function CatAndColonyData() {
       const payload = {
         name: form.name,
         location: form.location || undefined,
-        caretaker: form.caretaker || undefined,
+        caretakerName: form.caretaker || undefined,
         notes: form.notes,
       };
 

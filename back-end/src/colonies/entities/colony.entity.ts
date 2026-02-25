@@ -36,6 +36,9 @@ export class Colony {
   @Column({ nullable: true })
   caretakerId: string;
 
+  @Column({ nullable: true })
+  caretakerName: string;
+
   @OneToMany(() => Cat, (cat) => cat.colony)
   cats: Cat[];
 

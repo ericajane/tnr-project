@@ -25,6 +25,10 @@ export class CreateColonyDto {
   caretakerId?: string;
 
   @IsOptional()
+  @IsString()
+  caretakerName?: string;
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => NoteDto)
