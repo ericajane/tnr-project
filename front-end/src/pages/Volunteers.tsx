@@ -7,15 +7,21 @@ interface VolunteerFormState {
   lastName: string;
   email: string;
   phone: string;
-  address: string;
+  streetNumberAndName: string;
+  city: string;
+  zip: string;
 }
+
+const ZIP_RE = /^\d{5}(-\d{4})?$/;
 
 const emptyForm = (): VolunteerFormState => ({
   firstName: '',
   lastName: '',
   email: '',
   phone: '',
-  address: '',
+  streetNumberAndName: '',
+  city: '',
+  zip: '',
 });
 
 function VolunteerForm({
@@ -40,6 +46,10 @@ function VolunteerForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (form.zip && !ZIP_RE.test(form.zip)) {
+      setError('Zip code must be 5 digits (12345) or ZIP+4 format (12345-6789)');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -108,14 +118,37 @@ function VolunteerForm({
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Address</label>
+        <label className="text-sm font-medium text-gray-700">Street Number and Name</label>
         <input
           type="text"
-          value={form.address}
-          onChange={field('address')}
-          placeholder="123 Main St, Springfield"
+          value={form.streetNumberAndName}
+          onChange={field('streetNumberAndName')}
+          placeholder="123 Main St"
           className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
         />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">City</label>
+          <input
+            type="text"
+            value={form.city}
+            onChange={field('city')}
+            placeholder="Springfield"
+            className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">Zip Code</label>
+          <input
+            type="text"
+            value={form.zip}
+            onChange={field('zip')}
+            placeholder="12345"
+            className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+          />
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -158,13 +191,23 @@ export default function Volunteers() {
 
   useEffect(() => { load(); }, [load]);
 
+  function buildAddress(form: VolunteerFormState) {
+    const { streetNumberAndName, city, zip } = form;
+    if (!streetNumberAndName && !city && !zip) return undefined;
+    return {
+      streetNumberAndName: streetNumberAndName || undefined,
+      city: city || undefined,
+      zip: zip || undefined,
+    };
+  }
+
   async function handleCreate(form: VolunteerFormState) {
     await apiClient.post('/volunteers', {
       firstName: form.firstName,
       lastName: form.lastName,
       email: form.email,
       phone: form.phone || undefined,
-      address: form.address || undefined,
+      address: buildAddress(form),
     });
     setMode('none');
     await load();
@@ -176,7 +219,7 @@ export default function Volunteers() {
       lastName: form.lastName,
       email: form.email,
       phone: form.phone || undefined,
-      address: form.address || undefined,
+      address: buildAddress(form),
     });
     setMode('none');
     await load();
@@ -224,7 +267,13 @@ export default function Volunteers() {
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">{v.email}</p>
                   {v.phone && <p className="text-xs text-gray-500">{v.phone}</p>}
-                  {v.address && <p className="text-xs text-gray-500">{v.address}</p>}
+                  {v.address && (
+                    <p className="text-xs text-gray-500">
+                      {[v.address.streetNumberAndName, v.address.city, v.address.zip]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={() => setMode(prev => prev === v.id ? 'none' : v.id)}
@@ -242,7 +291,9 @@ export default function Volunteers() {
                       lastName: v.lastName,
                       email: v.email,
                       phone: v.phone ?? '',
-                      address: v.address ?? '',
+                      streetNumberAndName: v.address?.streetNumberAndName ?? '',
+                      city: v.address?.city ?? '',
+                      zip: v.address?.zip ?? '',
                     }}
                     submitLabel="Save changes"
                     onSave={form => handleEdit(v.id, form)}

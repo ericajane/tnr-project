@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { NoteDto } from '../../common/dto/note.dto';
+import { AddressDto } from '../../common/dto/address.dto';
 
 @Entity('volunteers')
 export class Volunteer {
@@ -24,8 +25,8 @@ export class Volunteer {
   @Column({ nullable: true })
   phone: string;
 
-  @Column({ nullable: true })
-  address: string;
+  @Column({ type: 'jsonb', nullable: true })
+  address: AddressDto;
 
   @Column({ nullable: true })
   role: string;

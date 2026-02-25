@@ -29,13 +29,19 @@ export interface Cat {
   updatedAt: string;
 }
 
+export interface Address {
+  streetNumberAndName?: string;
+  city?: string;
+  zip?: string;
+}
+
 export interface Volunteer {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
   phone?: string;
-  address?: string;
+  address?: Address;
   role?: string;
   active: boolean;
   notes: Note[];
