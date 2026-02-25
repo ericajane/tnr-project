@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Note } from '../types';
+import { apiClient } from '../api/client';
 
 interface ColonyFormState {
   name: string;
@@ -58,16 +59,7 @@ export default function CatAndColonyData() {
         notes: form.notes,
       };
 
-      const res = await fetch('/api/colonies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => res.statusText);
-        throw new Error(text);
-      }
+      await apiClient.post('/colonies', payload);
 
       setForm(emptyForm());
       setSuccess(true);

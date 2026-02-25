@@ -8,6 +8,11 @@ interface RequestOptions<TBody = unknown> {
   headers?: Record<string, string>;
 }
 
+function authHeader(): Record<string, string> {
+  const token = localStorage.getItem('tnr_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<TResponse, TBody = unknown>(
   path: string,
   options: RequestOptions<TBody> = {},
@@ -18,6 +23,7 @@ async function request<TResponse, TBody = unknown>(
     method,
     headers: {
       'Content-Type': 'application/json',
+      ...authHeader(),
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,

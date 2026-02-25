@@ -1,6 +1,15 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Layout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate('/login', { replace: true });
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="border-b border-gray-200">
@@ -62,6 +71,15 @@ export default function Layout() {
           >
             Equipment
           </NavLink>
+          <div className="ml-auto flex items-center gap-3">
+            {user && <span className="text-sm text-gray-500">{user.name}</span>}
+            <button
+              onClick={handleLogout}
+              className="text-sm text-gray-500 hover:text-gray-900"
+            >
+              Sign out
+            </button>
+          </div>
         </nav>
       </header>
       <main className="flex-1 p-6">
