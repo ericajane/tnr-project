@@ -125,6 +125,13 @@ export default function CatAndColonyData() {
   const [colonySubmitting, setColonySubmitting] = useState(false);
   const [colonyError, setColonyError] = useState<string | null>(null);
 
+  // Colony edit form
+  const [editingColony, setEditingColony] = useState(false);
+  const [editColonyForm, setEditColonyForm] = useState<ColonyFormState>(emptyColonyForm());
+  const [editNewNote, setEditNewNote] = useState({ note: '', author: '' });
+  const [editColonySubmitting, setEditColonySubmitting] = useState(false);
+  const [editColonyError, setEditColonyError] = useState<string | null>(null);
+
   // Cats
   const [cats, setCats] = useState<Cat[]>([]);
   const [catsLoading, setCatsLoading] = useState(false);
@@ -159,7 +166,55 @@ export default function CatAndColonyData() {
   function selectColony(id: string) {
     setSelectedId(id);
     setShowCreate(false);
+    setEditingColony(false);
     loadCats(id);
+  }
+
+  function openEditColony() {
+    if (!selectedColony) return;
+    setEditColonyForm({
+      name: selectedColony.name,
+      location: selectedColony.location ?? '',
+      caretakerName: selectedColony.caretakerName ?? '',
+      notes: selectedColony.notes ?? [],
+    });
+    setEditNewNote({ note: '', author: '' });
+    setEditColonyError(null);
+    setEditingColony(true);
+  }
+
+  function addEditNote() {
+    if (!editNewNote.note.trim() || !editNewNote.author.trim()) return;
+    setEditColonyForm(p => ({
+      ...p,
+      notes: [...p.notes, { ...editNewNote, createdAt: today() }],
+    }));
+    setEditNewNote({ note: '', author: '' });
+  }
+
+  function removeEditNote(i: number) {
+    setEditColonyForm(p => ({ ...p, notes: p.notes.filter((_, idx) => idx !== i) }));
+  }
+
+  async function handleEditColony(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedId) return;
+    setEditColonySubmitting(true);
+    setEditColonyError(null);
+    try {
+      const updated = await apiClient.patch<Colony>(`/colonies/${selectedId}`, {
+        name: editColonyForm.name,
+        location: editColonyForm.location || undefined,
+        caretakerName: editColonyForm.caretakerName || undefined,
+        notes: editColonyForm.notes,
+      });
+      setColonies(prev => prev.map(c => (c.id === selectedId ? updated : c)));
+      setEditingColony(false);
+    } catch (err) {
+      setEditColonyError(err instanceof Error ? err.message : 'Failed to save');
+    } finally {
+      setEditColonySubmitting(false);
+    }
   }
 
   // ── Create colony ─────────────────────────────────────────────────────────────
@@ -358,14 +413,109 @@ export default function CatAndColonyData() {
       {selectedColony && (
         <div className="max-w-xl border border-gray-200 rounded p-5">
 
-          {/* Colony summary */}
+          {/* Colony summary / edit form */}
           <div className="mb-5 pb-4 border-b border-gray-100">
-            <h2 className="font-semibold text-base">{selectedColony.name}</h2>
-            {selectedColony.location && (
-              <p className="text-sm text-gray-500 mt-0.5">{selectedColony.location}</p>
-            )}
-            {selectedColony.caretakerName && (
-              <p className="text-sm text-gray-500">Caretaker: {selectedColony.caretakerName}</p>
+            {editingColony ? (
+              <form onSubmit={handleEditColony} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-gray-700">
+                    Colony Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editColonyForm.name}
+                    onChange={e => setEditColonyForm(p => ({ ...p, name: e.target.value }))}
+                    className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-gray-700">Location</label>
+                  <input
+                    type="text"
+                    value={editColonyForm.location}
+                    onChange={e => setEditColonyForm(p => ({ ...p, location: e.target.value }))}
+                    className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-gray-700">Caretaker</label>
+                  <input
+                    type="text"
+                    value={editColonyForm.caretakerName}
+                    onChange={e => setEditColonyForm(p => ({ ...p, caretakerName: e.target.value }))}
+                    className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  />
+                </div>
+
+                <fieldset className="flex flex-col gap-3">
+                  <legend className="text-sm font-medium text-gray-700">Notes</legend>
+                  {editColonyForm.notes.length > 0 && (
+                    <ul className="flex flex-col gap-2">
+                      {editColonyForm.notes.map((n, i) => (
+                        <li key={i} className="flex items-start gap-3 bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm">
+                          <div className="flex-1">
+                            <p className="text-gray-800">{n.note}</p>
+                            <p className="text-gray-400 text-xs mt-0.5">{n.author} · {n.createdAt}</p>
+                          </div>
+                          <button type="button" onClick={() => removeEditNote(i)}
+                            className="text-gray-400 hover:text-red-500 text-xs shrink-0">
+                            Remove
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="flex flex-col gap-2 border border-gray-200 rounded px-3 py-3">
+                    <input type="text" value={editNewNote.note}
+                      onChange={e => setEditNewNote(p => ({ ...p, note: e.target.value }))}
+                      placeholder="Note text"
+                      className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                    <input type="text" value={editNewNote.author}
+                      onChange={e => setEditNewNote(p => ({ ...p, author: e.target.value }))}
+                      placeholder="Author"
+                      className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+                    <button type="button" onClick={addEditNote}
+                      disabled={!editNewNote.note.trim() || !editNewNote.author.trim()}
+                      className="self-start text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed">
+                      Add note
+                    </button>
+                  </div>
+                </fieldset>
+
+                {editColonyError && <p className="text-sm text-red-600">{editColonyError}</p>}
+
+                <div className="flex gap-2">
+                  <button type="submit" disabled={editColonySubmitting}
+                    className="bg-gray-900 text-white text-sm px-4 py-2 rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                    {editColonySubmitting ? 'Saving…' : 'Save changes'}
+                  </button>
+                  <button type="button" onClick={() => setEditingColony(false)}
+                    className="text-sm px-4 py-2 rounded border border-gray-300 text-gray-600 hover:bg-gray-100">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="font-semibold text-base">{selectedColony.name}</h2>
+                  {selectedColony.location && (
+                    <p className="text-sm text-gray-500 mt-0.5">{selectedColony.location}</p>
+                  )}
+                  {selectedColony.caretakerName && (
+                    <p className="text-sm text-gray-500">Caretaker: {selectedColony.caretakerName}</p>
+                  )}
+                </div>
+                <button
+                  onClick={openEditColony}
+                  className="text-xs px-2.5 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-100 shrink-0"
+                >
+                  Edit colony
+                </button>
+              </div>
             )}
           </div>
 
