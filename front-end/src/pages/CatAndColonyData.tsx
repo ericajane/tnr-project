@@ -91,6 +91,78 @@ function CatForm({
   );
 }
 
+// ─── Caretaker quick-add form ──────────────────────────────────────────────────
+
+type CaretakerQuickAddData = { firstName: string; lastName: string; email: string; phone: string };
+
+function CaretakerQuickAdd({
+  onSave,
+  onCancel,
+}: {
+  onSave: (d: CaretakerQuickAddData) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [form, setForm] = useState<CaretakerQuickAddData>({ firstName: '', lastName: '', email: '', phone: '' });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function field(key: keyof CaretakerQuickAddData) {
+    return (e: React.ChangeEvent<HTMLInputElement>) => setForm(p => ({ ...p, [key]: e.target.value }));
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      await onSave(form);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-2 bg-gray-50 border border-gray-200 rounded p-3 flex flex-col gap-3">
+      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">New Caretaker</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-600">First Name <span className="text-red-500">*</span></label>
+          <input required type="text" value={form.firstName} onChange={field('firstName')} placeholder="Jane"
+            className="border border-gray-300 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-600">Last Name <span className="text-red-500">*</span></label>
+          <input required type="text" value={form.lastName} onChange={field('lastName')} placeholder="Smith"
+            className="border border-gray-300 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+        </div>
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-600">Email <span className="text-red-500">*</span></label>
+        <input required type="email" value={form.email} onChange={field('email')} placeholder="jane@example.com"
+          className="border border-gray-300 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-600">Phone</label>
+        <input type="tel" value={form.phone} onChange={field('phone')} placeholder="555-555-5555"
+          className="border border-gray-300 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" />
+      </div>
+      {error && <p className="text-xs text-red-600">{error}</p>}
+      <div className="flex gap-2">
+        <button type="submit" disabled={saving}
+          className="bg-gray-900 text-white text-xs px-3 py-1.5 rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          {saving ? 'Saving…' : 'Save caretaker'}
+        </button>
+        <button type="button" onClick={onCancel}
+          className="text-xs px-3 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-100">
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
 // ─── Main page ─────────────────────────────────────────────────────────────────
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -116,6 +188,8 @@ export default function CatAndColonyData() {
 
   // Caretakers (for dropdown)
   const [caretakers, setCaretakers] = useState<Caretaker[]>([]);
+  // 'none' | 'create' | 'edit' — which colony form is showing the quick-add
+  const [showNewCaretakerIn, setShowNewCaretakerIn] = useState<'none' | 'create' | 'edit'>('none');
 
   // Selected colony
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -188,6 +262,27 @@ export default function CatAndColonyData() {
     setEditNewNote({ note: '', author: '' });
     setEditColonyError(null);
     setEditingColony(true);
+  }
+
+  async function handleQuickAddCaretaker(
+    data: CaretakerQuickAddData,
+    target: 'create' | 'edit',
+  ) {
+    const created = await apiClient.post<Caretaker>('/caretakers', {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phone: data.phone || undefined,
+    });
+    setCaretakers(prev => [...prev, created].sort((a, b) =>
+      a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName)
+    ));
+    if (target === 'create') {
+      setColonyForm(p => ({ ...p, caretakerId: created.id }));
+    } else {
+      setEditColonyForm(p => ({ ...p, caretakerId: created.id }));
+    }
+    setShowNewCaretakerIn('none');
   }
 
   function addEditNote() {
@@ -322,7 +417,15 @@ export default function CatAndColonyData() {
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">Caretaker</label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">Caretaker</label>
+                {showNewCaretakerIn !== 'create' && (
+                  <button type="button" onClick={() => setShowNewCaretakerIn('create')}
+                    className="text-xs text-gray-500 hover:text-gray-900">
+                    + New caretaker
+                  </button>
+                )}
+              </div>
               <select
                 value={colonyForm.caretakerId}
                 onChange={e => setColonyForm(p => ({ ...p, caretakerId: e.target.value }))}
@@ -333,6 +436,12 @@ export default function CatAndColonyData() {
                   <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
                 ))}
               </select>
+              {showNewCaretakerIn === 'create' && (
+                <CaretakerQuickAdd
+                  onSave={data => handleQuickAddCaretaker(data, 'create')}
+                  onCancel={() => setShowNewCaretakerIn('none')}
+                />
+              )}
             </div>
 
             <fieldset className="flex flex-col gap-3">
@@ -451,7 +560,15 @@ export default function CatAndColonyData() {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm font-medium text-gray-700">Caretaker</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700">Caretaker</label>
+                    {showNewCaretakerIn !== 'edit' && (
+                      <button type="button" onClick={() => setShowNewCaretakerIn('edit')}
+                        className="text-xs text-gray-500 hover:text-gray-900">
+                        + New caretaker
+                      </button>
+                    )}
+                  </div>
                   <select
                     value={editColonyForm.caretakerId}
                     onChange={e => setEditColonyForm(p => ({ ...p, caretakerId: e.target.value }))}
@@ -462,6 +579,12 @@ export default function CatAndColonyData() {
                       <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
                     ))}
                   </select>
+                  {showNewCaretakerIn === 'edit' && (
+                    <CaretakerQuickAdd
+                      onSave={data => handleQuickAddCaretaker(data, 'edit')}
+                      onCancel={() => setShowNewCaretakerIn('none')}
+                    />
+                  )}
                 </div>
 
                 <fieldset className="flex flex-col gap-3">
