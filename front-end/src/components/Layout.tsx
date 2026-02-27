@@ -40,6 +40,14 @@ export default function Layout() {
             Volunteers
           </NavLink>
           <NavLink
+            to="/caretakers"
+            className={({ isActive }) =>
+              `text-sm font-medium ${isActive ? 'text-gray-900 border-b-2 border-gray-900 pb-0.5' : 'text-gray-500 hover:text-gray-900'}`
+            }
+          >
+            Caretakers
+          </NavLink>
+          <NavLink
             to="/cat-colony"
             className={({ isActive }) =>
               `text-sm font-medium ${isActive ? 'text-gray-900 border-b-2 border-gray-900 pb-0.5' : 'text-gray-500 hover:text-gray-900'}`
