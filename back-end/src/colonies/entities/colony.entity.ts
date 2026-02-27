@@ -8,7 +8,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Volunteer } from '../../volunteers/entities/volunteer.entity';
+import { Caretaker } from '../../caretakers/entities/caretaker.entity';
 import { Cat } from './cat.entity';
 import { NoteDto } from '../../common/dto/note.dto';
 
@@ -29,15 +29,12 @@ export class Colony {
   @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
   lng: number;
 
-  @ManyToOne(() => Volunteer, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => Caretaker, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'caretakerId' })
-  caretaker: Volunteer;
+  caretaker: Caretaker;
 
   @Column({ nullable: true })
   caretakerId: string;
-
-  @Column({ nullable: true })
-  caretakerName: string;
 
   @OneToMany(() => Cat, (cat) => cat.colony)
   cats: Cat[];

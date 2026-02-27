@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Colony, Cat, Note } from '../types';
+import type { Colony, Cat, Note, Caretaker } from '../types';
 import { apiClient } from '../api/client';
 
 // ─── Cat form ──────────────────────────────────────────────────────────────────
@@ -98,14 +98,14 @@ const today = () => new Date().toISOString().slice(0, 10);
 interface ColonyFormState {
   name: string;
   location: string;
-  caretakerName: string;
+  caretakerId: string;
   notes: Note[];
 }
 
 const emptyColonyForm = (): ColonyFormState => ({
   name: '',
   location: '',
-  caretakerName: '',
+  caretakerId: '',
   notes: [],
 });
 
@@ -113,6 +113,9 @@ export default function CatAndColonyData() {
   // Colony list
   const [colonies, setColonies] = useState<Colony[]>([]);
   const [coloniesLoading, setColoniesLoading] = useState(true);
+
+  // Caretakers (for dropdown)
+  const [caretakers, setCaretakers] = useState<Caretaker[]>([]);
 
   // Selected colony
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -143,8 +146,12 @@ export default function CatAndColonyData() {
   const loadColonies = useCallback(async () => {
     setColoniesLoading(true);
     try {
-      const data = await apiClient.get<Colony[]>('/colonies');
-      setColonies(data);
+      const [coloniesData, caretakersData] = await Promise.all([
+        apiClient.get<Colony[]>('/colonies'),
+        apiClient.get<Caretaker[]>('/caretakers'),
+      ]);
+      setColonies(coloniesData);
+      setCaretakers(caretakersData);
     } catch { /* handled by empty state */ }
     finally { setColoniesLoading(false); }
   }, []);
@@ -175,7 +182,7 @@ export default function CatAndColonyData() {
     setEditColonyForm({
       name: selectedColony.name,
       location: selectedColony.location ?? '',
-      caretakerName: selectedColony.caretakerName ?? '',
+      caretakerId: selectedColony.caretakerId ?? '',
       notes: selectedColony.notes ?? [],
     });
     setEditNewNote({ note: '', author: '' });
@@ -205,7 +212,7 @@ export default function CatAndColonyData() {
       const updated = await apiClient.patch<Colony>(`/colonies/${selectedId}`, {
         name: editColonyForm.name,
         location: editColonyForm.location || undefined,
-        caretakerName: editColonyForm.caretakerName || undefined,
+        caretakerId: editColonyForm.caretakerId || undefined,
         notes: editColonyForm.notes,
       });
       setColonies(prev => prev.map(c => (c.id === selectedId ? updated : c)));
@@ -239,7 +246,7 @@ export default function CatAndColonyData() {
       const colony = await apiClient.post<Colony>('/colonies', {
         name: colonyForm.name,
         location: colonyForm.location || undefined,
-        caretakerName: colonyForm.caretakerName || undefined,
+        caretakerId: colonyForm.caretakerId || undefined,
         notes: colonyForm.notes,
       });
       setColonies(prev => [...prev, colony]);
@@ -316,13 +323,16 @@ export default function CatAndColonyData() {
 
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">Caretaker</label>
-              <input
-                type="text"
-                value={colonyForm.caretakerName}
-                onChange={e => setColonyForm(p => ({ ...p, caretakerName: e.target.value }))}
-                placeholder="Caretaker name"
+              <select
+                value={colonyForm.caretakerId}
+                onChange={e => setColonyForm(p => ({ ...p, caretakerId: e.target.value }))}
                 className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-              />
+              >
+                <option value="">— None —</option>
+                {caretakers.map(c => (
+                  <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
+                ))}
+              </select>
             </div>
 
             <fieldset className="flex flex-col gap-3">
@@ -399,9 +409,9 @@ export default function CatAndColonyData() {
                   {colony.location}
                 </span>
               )}
-              {colony.caretakerName && (
+              {colony.caretaker && (
                 <span className={`ml-2 text-xs ${selectedId === colony.id ? 'text-gray-300' : 'text-gray-500'}`}>
-                  · {colony.caretakerName}
+                  · {colony.caretaker.firstName} {colony.caretaker.lastName}
                 </span>
               )}
             </button>
@@ -442,12 +452,16 @@ export default function CatAndColonyData() {
 
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-medium text-gray-700">Caretaker</label>
-                  <input
-                    type="text"
-                    value={editColonyForm.caretakerName}
-                    onChange={e => setEditColonyForm(p => ({ ...p, caretakerName: e.target.value }))}
+                  <select
+                    value={editColonyForm.caretakerId}
+                    onChange={e => setEditColonyForm(p => ({ ...p, caretakerId: e.target.value }))}
                     className="border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-                  />
+                  >
+                    <option value="">— None —</option>
+                    {caretakers.map(c => (
+                      <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <fieldset className="flex flex-col gap-3">
@@ -505,8 +519,10 @@ export default function CatAndColonyData() {
                   {selectedColony.location && (
                     <p className="text-sm text-gray-500 mt-0.5">{selectedColony.location}</p>
                   )}
-                  {selectedColony.caretakerName && (
-                    <p className="text-sm text-gray-500">Caretaker: {selectedColony.caretakerName}</p>
+                  {selectedColony.caretaker && (
+                    <p className="text-sm text-gray-500">
+                      Caretaker: {selectedColony.caretaker.firstName} {selectedColony.caretaker.lastName}
+                    </p>
                   )}
                 </div>
                 <button

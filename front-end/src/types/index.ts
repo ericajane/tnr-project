@@ -35,6 +35,19 @@ export interface Address {
   zip?: string;
 }
 
+export interface Caretaker {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  address?: Address;
+  notes: Note[];
+  colonyIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Volunteer {
   id: string;
   firstName: string;
@@ -56,7 +69,7 @@ export interface Colony {
   lat?: number;
   lng?: number;
   caretakerId?: string;
-  caretakerName?: string;
+  caretaker?: Caretaker;
   notes: Note[];
   createdAt: string;
   updatedAt: string;
